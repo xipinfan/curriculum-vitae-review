@@ -26,6 +26,7 @@ Configure these in Hugging Face Spaces `Settings -> Variables and secrets`.
 | `DATABASE_URL` | Secret | Supabase transaction pooler or session pooler connection string |
 | `DIRECT_URL` | Secret | Supabase direct connection or session pooler URL for Prisma migrations |
 | `ADMIN_KEY` | Secret | Long random admin key |
+| `CV_REVIEW_DATABASE_SCHEMA` | Variable | Optional, defaults to `cv_review` |
 
 Use a Supabase Postgres connection string that is valid from Hugging Face's runtime.
 Use the database password from Supabase `Project Settings -> Database`; do not use the Supabase dashboard password, anon key, or service role key.
@@ -42,8 +43,13 @@ DIRECT_URL="postgresql://postgres:<url-encoded-db-password>@db.<project-ref>.sup
 
 # If direct database access is not available, use Supabase session pooler for migrations.
 DIRECT_URL="postgresql://postgres.<project-ref>:<url-encoded-db-password>@aws-0-<region>.pooler.supabase.com:5432/postgres"
+
+# Optional. The startup script appends schema=cv_review by default.
+CV_REVIEW_DATABASE_SCHEMA="cv_review"
 ```
 
+The app uses a dedicated Postgres schema (`cv_review` by default) so it can share a Supabase database with other projects without touching existing `public` tables.
+Do not baseline unrelated existing `public` tables as this app's migrations; that would mark migrations as applied without creating the app tables.
 If the Hugging Face log says Prisma is connecting as user `postgres` to `*.pooler.supabase.com:6543`, the pooler username is incomplete. Change it to `postgres.<project-ref>`.
 The startup script runs Prisma migrations with `DIRECT_URL`, then restores `DATABASE_URL` for the application runtime.
 

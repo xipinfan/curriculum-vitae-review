@@ -5,6 +5,22 @@ set -eu
 : "${ADMIN_KEY:?ADMIN_KEY is required. Set a long random value in Hugging Face Spaces secrets.}"
 
 export PORT="${PORT:-3001}"
+export CV_REVIEW_DATABASE_SCHEMA="${CV_REVIEW_DATABASE_SCHEMA:-cv_review}"
+
+with_schema_param() {
+  value="$1"
+  schema="$2"
+  case "$value" in
+    *"schema="*) printf '%s' "$value" ;;
+    *"?"*) printf '%s&schema=%s' "$value" "$schema" ;;
+    *) printf '%s?schema=%s' "$value" "$schema" ;;
+  esac
+}
+
+export DATABASE_URL="$(with_schema_param "$DATABASE_URL" "$CV_REVIEW_DATABASE_SCHEMA")"
+if [ -n "${DIRECT_URL:-}" ]; then
+  export DIRECT_URL="$(with_schema_param "$DIRECT_URL" "$CV_REVIEW_DATABASE_SCHEMA")"
+fi
 APP_DATABASE_URL="$DATABASE_URL"
 
 describe_db_url() {
@@ -22,6 +38,7 @@ describe_db_url() {
 }
 
 echo "Database environment diagnostic:"
+echo "CV_REVIEW_DATABASE_SCHEMA=$CV_REVIEW_DATABASE_SCHEMA"
 describe_db_url "DATABASE_URL" "$DATABASE_URL"
 describe_db_url "DIRECT_URL" "${DIRECT_URL:-}"
 if [ -n "${DIRECT_URL:-}" ] && [ "$DIRECT_URL" = "$DATABASE_URL" ]; then
