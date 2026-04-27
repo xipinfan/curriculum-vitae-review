@@ -71,11 +71,32 @@ export class WorkspaceKeysService {
 
     const adminKey = process.env.ADMIN_KEY?.trim();
     const isLegacyAdmin = adminKey && normalized === adminKey;
+    if (isLegacyAdmin) {
+      const adminWorkspace = await this.prisma.workspace.upsert({
+        where: { accessKey: normalized },
+        update: { status: WorkspaceStatus.ACTIVE },
+        create: {
+          name: 'Legacy Admin Workspace',
+          accessKey: normalized,
+          status: WorkspaceStatus.ACTIVE,
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      });
+
+      return {
+        valid: true,
+        workspaceId: adminWorkspace.id,
+        workspaceName: adminWorkspace.name,
+      };
+    }
 
     return {
-      valid: Boolean(isLegacyAdmin),
-      workspaceId: isLegacyAdmin ? `legacy-${normalized.slice(0, 8)}` : null,
-      workspaceName: isLegacyAdmin ? 'Legacy Admin Workspace' : null,
+      valid: false,
+      workspaceId: null,
+      workspaceName: null,
     };
   }
 }
