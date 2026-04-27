@@ -18,8 +18,21 @@ postgresql://postgres.<project-ref>:<url-encoded-db-password>@aws-0-<region>.poo
 EOF
       exit 1
     fi
+    if [ -z "${DIRECT_URL:-}" ]; then
+      cat >&2 <<'EOF'
+DATABASE_URL uses the Supabase transaction pooler on port 6543.
+Prisma migrations should not run through the transaction pooler.
+Set DIRECT_URL in Hugging Face Spaces secrets to a Supabase direct connection or session pooler URL.
+Examples:
+DIRECT_URL=postgresql://postgres:<url-encoded-db-password>@db.<project-ref>.supabase.co:5432/postgres
+DIRECT_URL=postgresql://postgres.<project-ref>:<url-encoded-db-password>@aws-0-<region>.pooler.supabase.com:5432/postgres
+EOF
+      exit 1
+    fi
     ;;
 esac
+
+export DIRECT_URL="${DIRECT_URL:-$DATABASE_URL}"
 
 pnpm --filter @cv-review/api prisma:migrate:deploy
 

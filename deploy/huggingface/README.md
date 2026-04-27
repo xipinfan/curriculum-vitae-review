@@ -23,7 +23,8 @@ Configure these in Hugging Face Spaces `Settings -> Variables and secrets`.
 
 | Name | Type | Example |
 | --- | --- | --- |
-| `DATABASE_URL` | Secret | Supabase PostgreSQL connection string |
+| `DATABASE_URL` | Secret | Supabase transaction pooler or session pooler connection string |
+| `DIRECT_URL` | Secret | Supabase direct connection or session pooler URL for Prisma migrations |
 | `ADMIN_KEY` | Secret | Long random admin key |
 
 Use a Supabase Postgres connection string that is valid from Hugging Face's runtime.
@@ -33,14 +34,18 @@ If the password contains special characters such as `@`, `#`, `%`, `:`, `/`, or 
 Recommended formats:
 
 ```bash
-# Supabase pooler / Supavisor, usually best for hosted runtimes.
+# Runtime connection. Supabase transaction pooler / Supavisor is usually best for hosted runtimes.
 DATABASE_URL="postgresql://postgres.<project-ref>:<url-encoded-db-password>@aws-0-<region>.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1"
 
-# Direct database connection, useful for migrations when Supabase allows direct access.
-DATABASE_URL="postgresql://postgres:<url-encoded-db-password>@db.<project-ref>.supabase.co:5432/postgres"
+# Migration connection. Prefer direct connection when the runtime supports it.
+DIRECT_URL="postgresql://postgres:<url-encoded-db-password>@db.<project-ref>.supabase.co:5432/postgres"
+
+# If direct database access is not available, use Supabase session pooler for migrations.
+DIRECT_URL="postgresql://postgres.<project-ref>:<url-encoded-db-password>@aws-0-<region>.pooler.supabase.com:5432/postgres"
 ```
 
 If the Hugging Face log says Prisma is connecting as user `postgres` to `*.pooler.supabase.com:6543`, the pooler username is incomplete. Change it to `postgres.<project-ref>`.
+If it stops after `Datasource "db"... at "*.pooler.supabase.com:6543"`, add `DIRECT_URL`; Prisma migrations should not use the transaction pooler.
 
 ## Model provider configuration
 
