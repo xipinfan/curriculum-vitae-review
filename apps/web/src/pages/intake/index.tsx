@@ -149,7 +149,7 @@ export function ResumeIntakePage() {
                 <Text className="intake-config-desc">
                   {activeConfig
                     ? `${activeConfig.defaultModel || '未设默认模型'} · ${activeConfig.baseUrl}`
-                    : '尚未配置，继续执行会落回默认模型。'}
+                    : '尚未配置，当前不能开始诊断，请先补充模型配置。'}
                 </Text>
               </div>
               <Button className="intake-config-btn" onClick={() => setConfigOpen(true)}>

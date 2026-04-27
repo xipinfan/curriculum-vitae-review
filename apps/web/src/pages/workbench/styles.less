@@ -418,6 +418,67 @@
   line-height: 1.4;
 }
 
+.draft-side-card {
+  border-radius: 12px;
+  border: 1px solid #cbccc9;
+  background: #ffffff;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.draft-side-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.draft-side-card-title.ant-typography {
+  margin: 0;
+  color: #111111;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+.draft-side-card-btn.ant-btn {
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid #cbccc9;
+  background: #f7f8f5;
+  color: #111111;
+  font-size: 12px;
+}
+
+.draft-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.draft-info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.draft-info-label.ant-typography {
+  margin: 0;
+  color: #666666;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+.draft-info-value.ant-typography {
+  margin: 0;
+  color: #111111;
+  font-size: 12px;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
 .draft-workspace-main {
   flex: 1;
   min-width: 0;
@@ -439,6 +500,13 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.draft-main-eyebrow.ant-typography {
+  margin: 0;
+  color: #666666;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', Consolas, monospace;
 }
 
 .draft-main-title.ant-typography {
@@ -529,6 +597,8 @@
   margin: 0;
   color: #666666;
   font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
 }
 
 .draft-summary-hint-risk.ant-typography {

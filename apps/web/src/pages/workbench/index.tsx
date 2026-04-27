@@ -168,7 +168,7 @@ export function WorkbenchPage() {
     if (activeModelConfig) {
       return true;
     }
-    messageApi.warning('请先配置模型 / Base URL / API Key，避免继续使用默认模型');
+    messageApi.warning('请先配置模型 / Base URL / API Key，当前工作台不会在未配置时继续执行');
     return false;
   }
 
@@ -1177,6 +1177,156 @@ export function WorkbenchPage() {
     selectedModule,
   ]);
 
+  const summaryCards = useMemo(() => {
+    if (selectedModule === 'diagnosis') {
+      return [
+        {
+          label: '待处理风险',
+          value: diagnosisViewModel.pendingRiskCount,
+          hint: `${diagnosisViewModel.highRiskCount} 条高风险需要先处理`,
+        },
+        {
+          label: '已生成诊断',
+          value: diagnosisViewModel.issueCount,
+          hint: currentJob ? `当前任务 ${currentJob.status}` : '诊断任务尚未启动',
+        },
+        {
+          label: '可进入改写',
+          value: diagnosisViewModel.optimizableCount,
+          hint: '处理完成后可直接切到简历优化模块',
+        },
+      ];
+    }
+
+    if (selectedModule === 'optimize') {
+      return [
+        {
+          label: '待改写条目',
+          value: optimizeItems.filter((item) => item.status === 'OPEN').length,
+          hint: '逐条处理风险项，保留编辑记录',
+        },
+        {
+          label: '已处理条目',
+          value: optimizeItems.filter((item) => item.status !== 'OPEN').length,
+          hint: '采纳、忽略和手动改写都会计入完成',
+        },
+        {
+          label: '当前模块状态',
+          value: moduleStatusText,
+          hint: activeOptimizeItem ? `正在处理：${activeOptimizeItem.title}` : '等待诊断结果进入改写',
+        },
+      ];
+    }
+
+    if (selectedModule === 'qa') {
+      return [
+        {
+          label: '问答进度',
+          value: `${sessionProgress}%`,
+          hint: sessionId ? '会话已建立，可持续追问和批改' : '需要先创建面试会话',
+        },
+        {
+          label: '已生成问题',
+          value: qaRounds.length,
+          hint: `${qaRounds.filter((round) => round.userAnswer?.trim()).length} 条已回答`,
+        },
+        {
+          label: '当前状态',
+          value: moduleStatusText,
+          hint: activeQaRound ? `当前问题：${activeQaRound.question}` : '等待生成第一批追问',
+        },
+      ];
+    }
+
+    return [
+      {
+        label: '已准备好',
+        value: reviewPreparedCount,
+        hint: '高分回答和已完成修改会汇总到这里',
+      },
+      {
+        label: '仍然薄弱',
+        value: reviewWeakCount,
+        hint: '这部分建议继续回到简历和问答模块补强',
+      },
+      {
+        label: '需回写简历',
+        value: reviewBackToResumeCount,
+        hint: reviewReport?.readinessLevel ?? '复盘报告尚未生成',
+      },
+    ];
+  }, [
+    activeOptimizeItem,
+    activeQaRound,
+    currentJob,
+    diagnosisViewModel.highRiskCount,
+    diagnosisViewModel.issueCount,
+    diagnosisViewModel.optimizableCount,
+    diagnosisViewModel.pendingRiskCount,
+    moduleStatusText,
+    optimizeItems,
+    qaRounds,
+    reviewBackToResumeCount,
+    reviewPreparedCount,
+    reviewReport?.readinessLevel,
+    reviewWeakCount,
+    selectedModule,
+    sessionId,
+    sessionProgress,
+  ]);
+
+  const workspaceSnapshotItems = useMemo(
+    () => [
+      { label: '工作区', value: workspaceName.trim() || '未命名作战包' },
+      { label: '岗位画像', value: targetRole.trim() || '待确认画像' },
+      { label: '工作区 ID', value: workspaceId.trim() || '未创建' },
+      { label: '当前简历', value: resumeId.trim() ? `${resumeId.slice(0, 10)}...` : '未导入' },
+    ],
+    [resumeId, targetRole, workspaceId, workspaceName],
+  );
+
+  const modelConfigItems = useMemo(
+    () => [
+      { label: '默认模型', value: activeModelConfig?.defaultModel?.trim() || '未配置模型' },
+      { label: 'Base URL', value: activeModelConfig?.baseUrl?.trim() || '未配置' },
+      { label: 'API Key', value: activeModelConfig?.apiKeyMasked?.trim() || '未配置' },
+      { label: 'API 状态', value: healthText },
+    ],
+    [activeModelConfig, healthText],
+  );
+
+  const statusBanner = useMemo(() => {
+    if (!activeModelConfig) {
+      return {
+        title: '模型尚未接入',
+        description: '先完成模型 / Base URL / API Key 配置，再执行诊断、改写、追问和复盘。',
+      };
+    }
+
+    if (!resumeId.trim()) {
+      return {
+        title: '当前工作台还没有绑定简历',
+        description: '请先完成导入和画像确认，工作台才能生成诊断卡片和问答会话。',
+      };
+    }
+
+    if (selectedModule === 'diagnosis' && !currentJob) {
+      return {
+        title: '诊断任务尚未开始',
+        description: '点击右上角重新诊断后，AI 会根据当前简历和模型配置生成第一轮风险卡片。',
+      };
+    }
+
+    if (selectedModule === 'qa' && !sessionId.trim()) {
+      return {
+        title: '问答会话尚未建立',
+        description: '完成诊断后进入问答模块生成追问，系统才会开始记录回答和批改进度。',
+      };
+    }
+
+    return null;
+  }, [activeModelConfig, currentJob, resumeId, selectedModule, sessionId]);
+
   const moduleMainContent = (
     <WorkspaceAiPanel
       moduleTitle={currentHeader.title}
@@ -1222,7 +1372,8 @@ export function WorkbenchPage() {
         </div>
 
         <div className="draft-resume-meta">
-          <Text className="draft-resume-name">{targetRole || '张三 · 后端开发'}</Text>
+          <Text className="draft-resume-name">{workspaceName.trim() || '当前作战包'}</Text>
+          <Text className="draft-resume-date">{targetRole || '待确认岗位画像'}</Text>
           <Text className="draft-resume-date">
             {currentJob?.updatedAt ? `最后更新 ${new Date(currentJob.updatedAt).toLocaleString()}` : "最后更新 --"}
           </Text>
@@ -1251,19 +1402,53 @@ export function WorkbenchPage() {
             {diagnosisViewModel.pendingRiskCount} 个风险待处理 · {diagnosisViewModel.pendingAnswerCount} 个回答待批改
           </Text>
         </div>
+
+        <div className="draft-side-card">
+          <div className="draft-side-card-head">
+            <Text className="draft-side-card-title">模型配置概览</Text>
+            <Button className="draft-side-card-btn" onClick={() => setModelConfigOpen(true)}>
+              {activeModelConfig ? '修改' : '配置'}
+            </Button>
+          </div>
+
+          <div className="draft-info-list">
+            {modelConfigItems.map((item) => (
+              <div key={item.label} className="draft-info-row">
+                <Text className="draft-info-label">{item.label}</Text>
+                <Text className="draft-info-value">{item.value}</Text>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="draft-side-card">
+          <div className="draft-side-card-head">
+            <Text className="draft-side-card-title">工作区快照</Text>
+          </div>
+
+          <div className="draft-info-list">
+            {workspaceSnapshotItems.map((item) => (
+              <div key={item.label} className="draft-info-row">
+                <Text className="draft-info-label">{item.label}</Text>
+                <Text className="draft-info-value">{item.value}</Text>
+              </div>
+            ))}
+          </div>
+        </div>
       </aside>
 
       <main className="draft-workspace-main">
         <header className="draft-main-header">
           <div className="draft-main-heading">
+            <Text className="draft-main-eyebrow">CV Review / AI Workspace</Text>
             <Title className="draft-main-title" level={2}>
-              {currentHeader.title}
+              {workspaceName.trim() || '候选人作战工作台'}
             </Title>
-            <Text className="draft-main-subtitle">{currentHeader.subtitle}</Text>
+            <Text className="draft-main-subtitle">{`当前模块：${currentHeader.title} · ${currentHeader.subtitle}`}</Text>
           </div>
           <Space size={10} wrap>
             <button type="button" className="draft-model-pill" onClick={() => setModelConfigOpen(true)}>
-              <Text>{activeModelConfig?.defaultModel || "未配置模型"}</Text>
+              <Text>{activeModelConfig?.defaultModel || '未配置模型'}</Text>
             </button>
             <Button
               className="draft-rerun-btn"
@@ -1308,6 +1493,25 @@ export function WorkbenchPage() {
             </Button>
           </Space>
         </header>
+
+        {statusBanner ? (
+          <section className="draft-status-banner is-warning">
+            <div className="draft-status-copy">
+              <Text className="draft-status-title">{statusBanner.title}</Text>
+              <Text className="draft-status-desc">{statusBanner.description}</Text>
+            </div>
+          </section>
+        ) : null}
+
+        <section className="draft-summary-row">
+          {summaryCards.map((item) => (
+            <div key={item.label} className="draft-summary-card">
+              <Text className="draft-summary-label">{item.label}</Text>
+              <Text className="draft-summary-value">{item.value}</Text>
+              <Text className="draft-summary-hint">{item.hint}</Text>
+            </div>
+          ))}
+        </section>
 
         {moduleMainContent}
 
