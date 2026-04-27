@@ -1,3 +1,12 @@
+---
+title: Curriculum Vitae Review
+emoji: 🧭
+colorFrom: blue
+colorTo: gray
+sdk: docker
+app_port: 7860
+---
+
 # curriculum-vitae-review
 
 一个可私有部署的 AI 简历分析与面试准备工作台。

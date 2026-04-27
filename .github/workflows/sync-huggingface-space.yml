@@ -1,0 +1,64 @@
+name: Sync Hugging Face Space
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v4
+
+      - name: Check Hugging Face token
+        id: hf-token
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "HF_TOKEN is not configured; skipping Hugging Face Space sync."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+
+      - name: Clone Hugging Face Space
+        if: steps.hf-token.outputs.enabled == 'true'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${HF_TOKEN}@huggingface.co/spaces/xipinfan1/work" hf-space
+
+      - name: Sync repository content
+        if: steps.hf-token.outputs.enabled == 'true'
+        run: |
+          rsync -av --delete \
+            --exclude ".git" \
+            --exclude ".github" \
+            --exclude ".superpowers" \
+            --exclude "node_modules" \
+            --exclude "*/node_modules" \
+            --exclude "dist" \
+            --exclude "*/dist" \
+            --exclude ".env" \
+            --exclude ".env.*" \
+            --exclude "tmp-*.log" \
+            --exclude "tmp-*.ps1" \
+            ./ hf-space/
+
+      - name: Commit and push Space changes
+        if: steps.hf-token.outputs.enabled == 'true'
+        working-directory: hf-space
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to sync."
+            exit 0
+          fi
+          git commit -m "sync from curriculum-vitae-review"
+          git push origin main
