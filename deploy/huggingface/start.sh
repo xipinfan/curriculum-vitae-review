@@ -5,6 +5,7 @@ set -eu
 : "${ADMIN_KEY:?ADMIN_KEY is required. Set a long random value in Hugging Face Spaces secrets.}"
 
 export PORT="${PORT:-3001}"
+APP_DATABASE_URL="$DATABASE_URL"
 
 case "$DATABASE_URL" in
   *pooler.supabase.com:6543*)
@@ -34,7 +35,14 @@ esac
 
 export DIRECT_URL="${DIRECT_URL:-$DATABASE_URL}"
 
-pnpm --filter @cv-review/api prisma:migrate:deploy
+if [ "$DIRECT_URL" != "$APP_DATABASE_URL" ]; then
+  echo "Running Prisma migrations with DIRECT_URL."
+  DATABASE_URL="$DIRECT_URL" pnpm --filter @cv-review/api prisma:migrate:deploy
+  export DATABASE_URL="$APP_DATABASE_URL"
+else
+  echo "Running Prisma migrations with DATABASE_URL."
+  pnpm --filter @cv-review/api prisma:migrate:deploy
+fi
 
 node apps/api/dist/main.js &
 api_pid="$!"

@@ -45,7 +45,7 @@ DIRECT_URL="postgresql://postgres.<project-ref>:<url-encoded-db-password>@aws-0-
 ```
 
 If the Hugging Face log says Prisma is connecting as user `postgres` to `*.pooler.supabase.com:6543`, the pooler username is incomplete. Change it to `postgres.<project-ref>`.
-If it stops after `Datasource "db"... at "*.pooler.supabase.com:6543"`, add `DIRECT_URL`; Prisma migrations should not use the transaction pooler.
+The startup script runs Prisma migrations with `DIRECT_URL`, then restores `DATABASE_URL` for the application runtime.
 
 ## Model provider configuration
 
