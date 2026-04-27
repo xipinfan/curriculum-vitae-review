@@ -1,0 +1,180 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum WorkspaceStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum ResumeSourceType {
+  TEXT
+  MARKDOWN
+  PDF
+  DOCX
+}
+
+enum DiagnosisJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum DiagnosisSeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum DiagnosisItemStatus {
+  OPEN
+  ADOPTED
+  IGNORED
+  MANUALLY_EDITED
+}
+
+enum SessionStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum ModelConfigStatus {
+  ACTIVE
+  DISABLED
+}
+
+model Workspace {
+  id        String          @id @default(cuid())
+  name      String
+  accessKey String          @unique
+  status    WorkspaceStatus @default(ACTIVE)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  resumes    ResumeDocument[]
+  diagnosis  DiagnosisJob[]
+  sessions   InterviewSession[]
+  modelConfigs ModelConfig[]
+
+  @@index([status])
+}
+
+model ResumeDocument {
+  id          String           @id @default(cuid())
+  workspaceId String
+  sourceType ResumeSourceType @default(TEXT)
+  rawText     String
+  parsedData  Json?
+  parserVersion String?
+  parsedAt    DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  workspace Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  jobs      DiagnosisJob[]
+
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, parsedAt])
+}
+
+model DiagnosisJob {
+  id              String             @id @default(cuid())
+  workspaceId     String
+  resumeDocumentId String?
+  targetRole      String?
+  targetLevel     String?
+  techStack       String?
+  businessDomain  String?
+  status          DiagnosisJobStatus @default(PENDING)
+  errorMessage    String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  completedAt     DateTime?
+
+  workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  resume    ResumeDocument? @relation(fields: [resumeDocumentId], references: [id], onDelete: SetNull)
+  items     DiagnosisItem[]
+  sessions  InterviewSession[]
+
+  @@index([workspaceId, status, createdAt])
+  @@index([resumeDocumentId])
+}
+
+model DiagnosisItem {
+  id            String              @id @default(cuid())
+  diagnosisJobId String
+  category      String
+  severity      DiagnosisSeverity   @default(MEDIUM)
+  title         String
+  description   String
+  suggestion    String?
+  editedContent String?
+  status        DiagnosisItemStatus @default(OPEN)
+  userNote      String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  diagnosis DiagnosisJob @relation(fields: [diagnosisJobId], references: [id], onDelete: Cascade)
+
+  @@index([diagnosisJobId, status])
+}
+
+model InterviewSession {
+  id             String        @id @default(cuid())
+  workspaceId    String
+  diagnosisJobId String?
+  title          String
+  status         SessionStatus @default(DRAFT)
+  overallScore   Int?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  workspace Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  diagnosis DiagnosisJob? @relation(fields: [diagnosisJobId], references: [id], onDelete: SetNull)
+  rounds    SessionRound[]
+
+  @@index([workspaceId, status, createdAt])
+  @@index([diagnosisJobId])
+}
+
+model SessionRound {
+  id              String   @id @default(cuid())
+  sessionId       String
+  question        String
+  referenceAnswer String?
+  userAnswer      String?
+  feedback        String?
+  score           Int?
+  followUpQuestion String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  session InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+}
+
+model ModelConfig {
+  id           String            @id @default(cuid())
+  workspaceId  String
+  name         String
+  baseUrl      String
+  apiKey       String
+  defaultModel String?
+  status       ModelConfigStatus @default(ACTIVE)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId, status, createdAt])
+}

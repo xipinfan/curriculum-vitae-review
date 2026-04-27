@@ -1,0 +1,323 @@
+.confirm-shell {
+  min-height: 100vh;
+  background: #f2f3f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.confirm-frame {
+  width: 1200px;
+  max-width: 100%;
+  min-height: 800px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 40px;
+}
+
+.confirm-top {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.confirm-brand.ant-typography {
+  margin: 0;
+  color: #111111;
+  font-size: 18px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+.confirm-step.ant-typography {
+  margin: 0;
+  color: #666666;
+  font-size: 13px;
+}
+
+.confirm-main {
+  flex: 1;
+  display: flex;
+  gap: 24px;
+}
+
+.confirm-evidence-panel,
+.confirm-profile-panel {
+  border-radius: 16px;
+  border: 1px solid #cbccc9;
+  background: #ffffff;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.confirm-evidence-panel {
+  flex: 1;
+  min-width: 0;
+  gap: 18px;
+}
+
+.confirm-profile-panel {
+  width: 380px;
+  flex: 0 0 380px;
+  gap: 18px;
+}
+
+.confirm-panel-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.confirm-title.ant-typography,
+.confirm-card-title.ant-typography {
+  margin: 0;
+  color: #111111;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+.confirm-title.ant-typography {
+  font-size: 24px;
+}
+
+.confirm-card-title.ant-typography {
+  font-size: 22px;
+}
+
+.confirm-desc.ant-typography,
+.confirm-panel-desc.ant-typography {
+  margin: 0;
+  color: #666666;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.confirm-step-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.confirm-step-chip.ant-typography {
+  margin: 0;
+  border-radius: 999px;
+  border: 1px solid #cbccc9;
+  background: #f7f8f5;
+  padding: 8px 12px;
+  color: #666666;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+.confirm-step-chip.is-done.ant-typography {
+  color: #004d1a;
+  background: #e7f4ea;
+  border-color: #c6e3ce;
+}
+
+.confirm-step-chip.is-current.ant-typography {
+  color: #111111;
+  background: #ff8400;
+  border-color: #ff8400;
+}
+
+.confirm-confidence-card {
+  border-radius: 12px;
+  background: #f7f8f5;
+  border: 1px solid #cbccc9;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.confirm-confidence-badge {
+  height: 36px;
+  width: fit-content;
+  border-radius: 999px;
+  background: #dfe6e1;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #004d1a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.confirm-confidence-desc.ant-typography {
+  margin: 0;
+  color: #666666;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.confirm-preview-card {
+  flex: 1;
+  border-radius: 12px;
+  border: 1px solid #cbccc9;
+  background: #f7f8f5;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.confirm-preview-text {
+  margin: 0;
+  white-space: pre-wrap;
+  color: #111111;
+  font-size: 14px;
+  line-height: 1.6;
+  font-family: 'Geist', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+.confirm-reason-box {
+  border-radius: 12px;
+  background: #dfdfe6;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.confirm-reason-title.ant-typography,
+.confirm-reason-text.ant-typography {
+  margin: 0;
+  color: #000066;
+}
+
+.confirm-reason-title.ant-typography {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+.confirm-reason-text.ant-typography {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.confirm-config-card {
+  border-radius: 12px;
+  border: 1px solid #cbccc9;
+  background: #f7f8f5;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.confirm-config-title.ant-typography {
+  margin: 0;
+  color: #111111;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+.confirm-config-desc.ant-typography {
+  margin: 4px 0 0;
+  color: #666666;
+  font-size: 12px;
+  line-height: 1.45;
+  display: block;
+}
+
+.confirm-config-btn.ant-btn {
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #cbccc9;
+  background: #ffffff;
+  color: #111111;
+}
+
+.confirm-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.confirm-field-label.ant-typography {
+  margin: 0;
+  color: #111111;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+.confirm-input.ant-input {
+  height: 42px;
+  border-radius: 10px;
+  border-color: #cbccc9;
+  background: #e7e8e5;
+}
+
+.confirm-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.confirm-level-segment.ant-segmented {
+  background: #e7e8e5;
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.confirm-level-segment.ant-segmented .ant-segmented-item-selected {
+  background: #ff8400;
+}
+
+.confirm-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.confirm-primary-btn.ant-btn,
+.confirm-secondary-btn.ant-btn {
+  height: 42px;
+  border-radius: 10px;
+}
+
+.confirm-primary-btn.ant-btn {
+  border: none;
+  background: #ff8400;
+  color: #111111;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+.confirm-secondary-btn.ant-btn {
+  background: #ffffff;
+  border-color: #cbccc9;
+  color: #111111;
+}
+
+@media (max-width: 1100px) {
+  .confirm-frame {
+    min-height: auto;
+    padding: 24px;
+  }
+
+  .confirm-main {
+    flex-direction: column;
+  }
+
+  .confirm-profile-panel {
+    width: 100%;
+    flex: 1;
+  }
+
+  .confirm-config-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

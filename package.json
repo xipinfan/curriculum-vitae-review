@@ -1,0 +1,20 @@
+{
+  "name": "curriculum-vitae-review",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI 简历分析与面试准备工作台（Monorepo）",
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "dev": "concurrently -k \"pnpm dev:api\" \"pnpm dev:web\"",
+    "dev:api": "pnpm --filter @cv-review/api start:dev",
+    "dev:web": "pnpm --filter @cv-review/web dev",
+    "start:prod": "concurrently -k \"pnpm start:prod:api\" \"pnpm start:prod:web\"",
+    "start:prod:api": "pnpm --filter @cv-review/api start:prod",
+    "start:prod:web": "pnpm --filter @cv-review/web preview",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

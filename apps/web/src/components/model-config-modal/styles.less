@@ -1,0 +1,224 @@
+.model-config-modal {
+  .ant-modal-content {
+    border-radius: 20px;
+    padding: 24px;
+    background: #f2f3f0;
+  }
+
+  .ant-modal-header {
+    background: transparent;
+    padding: 0 0 16px;
+  }
+
+  .ant-modal-title {
+    color: #111111;
+    font-size: 22px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+  }
+}
+
+.model-config-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.model-config-meta {
+  border-radius: 14px;
+  border: 1px solid #cbccc9;
+  background: #ffffff;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.model-config-meta-title.ant-typography,
+.model-config-section-title.ant-typography,
+.model-config-label.ant-typography {
+  margin: 0;
+  color: #111111;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+.model-config-meta-value.ant-typography {
+  margin: 0;
+  color: #666666;
+  font-size: 13px;
+}
+
+.model-config-alert.ant-alert {
+  border-radius: 14px;
+}
+
+.model-config-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.model-config-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.model-config-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.model-config-empty {
+  grid-column: 1 / -1;
+  border-radius: 14px;
+  border: 1px dashed #cbccc9;
+  background: #ffffff;
+  padding: 16px;
+  color: #666666;
+}
+
+.model-config-item {
+  border: 1px solid #cbccc9;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.model-config-item.is-active {
+  border-color: #ff8400;
+  box-shadow: 0 0 0 2px rgba(255, 132, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.model-config-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.model-config-item-name.ant-typography {
+  margin: 0;
+  color: #111111;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+.model-config-item-desc.ant-typography {
+  margin: 0;
+  color: #666666;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.model-config-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.model-config-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.model-config-field-full {
+  grid-column: 1 / -1;
+}
+
+.model-config-field .ant-input,
+.model-config-field .ant-input-affix-wrapper {
+  min-height: 42px;
+  border-radius: 10px;
+  border-color: #cbccc9;
+  background: #ffffff;
+}
+
+.model-config-status-row {
+  display: flex;
+  gap: 10px;
+}
+
+.model-config-status-btn.ant-btn,
+.model-config-ghost-btn.ant-btn,
+.model-config-outline-btn.ant-btn {
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid #cbccc9;
+  background: #ffffff;
+  color: #666666;
+}
+
+.model-config-status-btn.is-active.ant-btn {
+  border-color: #ff8400;
+  background: #fff2e2;
+  color: #111111;
+}
+
+.model-config-models {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.model-config-model-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.model-config-model-tag {
+  border: 1px solid #cbccc9;
+  border-radius: 999px;
+  background: #ffffff;
+  padding: 6px 12px;
+  color: #666666;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.model-config-model-tag.is-active {
+  border-color: #ff8400;
+  background: #fff2e2;
+  color: #111111;
+}
+
+.model-config-actions.ant-space {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.model-config-primary-btn.ant-btn {
+  height: 42px;
+  border-radius: 10px;
+  border: none;
+  background: #ff8400;
+  color: #111111;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+.model-config-primary-btn.ant-btn:hover {
+  background: #f08f1d !important;
+  color: #111111 !important;
+}
+
+@media (max-width: 860px) {
+  .model-config-list,
+  .model-config-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
