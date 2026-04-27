@@ -7,6 +7,29 @@ set -eu
 export PORT="${PORT:-3001}"
 APP_DATABASE_URL="$DATABASE_URL"
 
+describe_db_url() {
+  name="$1"
+  value="$2"
+  if [ -z "$value" ]; then
+    echo "$name=missing"
+    return
+  fi
+  host_port="$(printf '%s' "$value" | sed -n 's#^[^:]*://[^@]*@\([^/?]*\).*#\1#p')"
+  if [ -z "$host_port" ]; then
+    host_port="unparseable"
+  fi
+  echo "$name=set host=$host_port"
+}
+
+echo "Database environment diagnostic:"
+describe_db_url "DATABASE_URL" "$DATABASE_URL"
+describe_db_url "DIRECT_URL" "${DIRECT_URL:-}"
+if [ -n "${DIRECT_URL:-}" ] && [ "$DIRECT_URL" = "$DATABASE_URL" ]; then
+  echo "DIRECT_URL_EQUALS_DATABASE_URL=true"
+else
+  echo "DIRECT_URL_EQUALS_DATABASE_URL=false"
+fi
+
 case "$DATABASE_URL" in
   *pooler.supabase.com:6543*)
     db_user="$(printf '%s' "$DATABASE_URL" | sed -n 's#^postgresql://\([^:@/]*\).*#\1#p')"
