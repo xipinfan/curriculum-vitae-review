@@ -27,8 +27,20 @@ Configure these in Hugging Face Spaces `Settings -> Variables and secrets`.
 | `ADMIN_KEY` | Secret | Long random admin key |
 
 Use a Supabase Postgres connection string that is valid from Hugging Face's runtime.
-For Prisma migrations, prefer Supabase's direct database connection when available.
-If you use Supabase's pooler URL, add `?pgbouncer=true&connection_limit=1`.
+Use the database password from Supabase `Project Settings -> Database`; do not use the Supabase dashboard password, anon key, or service role key.
+If the password contains special characters such as `@`, `#`, `%`, `:`, `/`, or `?`, URL encode it before putting it in `DATABASE_URL`.
+
+Recommended formats:
+
+```bash
+# Supabase pooler / Supavisor, usually best for hosted runtimes.
+DATABASE_URL="postgresql://postgres.<project-ref>:<url-encoded-db-password>@aws-0-<region>.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1"
+
+# Direct database connection, useful for migrations when Supabase allows direct access.
+DATABASE_URL="postgresql://postgres:<url-encoded-db-password>@db.<project-ref>.supabase.co:5432/postgres"
+```
+
+If the Hugging Face log says Prisma is connecting as user `postgres` to `*.pooler.supabase.com:6543`, the pooler username is incomplete. Change it to `postgres.<project-ref>`.
 
 ## Model provider configuration
 
