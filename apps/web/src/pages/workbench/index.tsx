@@ -2,9 +2,10 @@ import { CheckCircleOutlined, EditOutlined, MessageOutlined, SearchOutlined } fr
 import { Button, Space, Tag, Typography, message } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { ModelConfigModal } from '@/components/model-config-modal';
+import { WorkspaceAiPanel, type WorkspaceAiConversationItem, type WorkspaceAiMessage } from '@/components/workspace-ai-panel';
 import { useWorkspaceModelConfig } from '@/hooks/use-workspace-model-config';
 import { useWorkbenchStore } from '@/stores/workbench-store';
-import { createDiagnosisJob, getDiagnosisJob, listDiagnosisJobs, startDiagnosisJob } from '@/services/diagnosis';
+import { applyDiagnosisItemAction, createDiagnosisJob, getDiagnosisJob, listDiagnosisJobs, startDiagnosisJob } from '@/services/diagnosis';
 import { importResume, parseResume } from '@/services/resumes';
 import { createSession, generateSessionQuestions, getSession, getSessionProgress, listSessions } from '@/services/sessions';
 import { fetchHealth } from '@/services/system';
@@ -15,6 +16,7 @@ import { QAPanel } from '@/components/workbench-qa-panel';
 import { ReviewPanel } from '@/components/workbench-review-panel';
 import type { ConfirmedResumeIntake } from '@/types/resume';
 import type { BattlePackStepKey } from '@/stores/workbench-store';
+import type { DiagnosisItem } from '@/types/diagnosis';
 import './styles.less';
 
 const { Title, Text } = Typography;
@@ -34,6 +36,12 @@ const battlePackSteps = [
   { key: 'createSession' as const, title: '创建问答会话' },
   { key: 'generateQuestions' as const, title: '生成追问题库' },
 ];
+
+function severityBadgeText(level: DiagnosisItem['severity']) {
+  if (level === 'HIGH') return '高风险';
+  if (level === 'MEDIUM') return '中风险';
+  return '建议练习';
+}
 
 export function WorkbenchPage() {
   const [messageApi, messageContextHolder] = message.useMessage();
@@ -58,7 +66,13 @@ export function WorkbenchPage() {
     sessionLoading, setSessionLoading,
     questionGenerating, setQuestionGenerating,
     sessionProgress, setSessionProgress,
+    selectedDiagnosisItemId, setSelectedDiagnosisItemId,
+    selectedOptimizeItemId, setSelectedOptimizeItemId,
+    selectedQaRoundId, setSelectedQaRoundId,
+    manualDrafts, setManualDrafts,
+    answerDrafts, setAnswerDrafts,
     reviewLoading,
+    reviewReport,
     resumeSourceType,
     resumeContent,
     targetRole,
@@ -78,6 +92,21 @@ export function WorkbenchPage() {
 
   const { activeConfig: activeModelConfig, reload: reloadModelConfig } = useWorkspaceModelConfig(workspaceId);
   const diagnosisViewModel = useWorkbenchDiagnosisViewModel();
+  const optimizeItems = diagnosisViewModel.sortedItems;
+  const activeDiagnosisItem =
+    diagnosisViewModel.sortedItems.find((item) => item.id === selectedDiagnosisItemId) ??
+    diagnosisViewModel.primaryIssue;
+  const activeOptimizeItem =
+    optimizeItems.find((item) => item.id === selectedOptimizeItemId) ??
+    optimizeItems.find((item) => item.status === 'OPEN') ??
+    optimizeItems[0] ??
+    null;
+  const qaRounds = currentSession?.rounds ?? [];
+  const activeQaRound =
+    qaRounds.find((round) => round.id === selectedQaRoundId) ??
+    qaRounds.find((round) => !round.userAnswer?.trim()) ??
+    qaRounds[0] ??
+    null;
 
   function ensureModelConfigured() {
     if (activeModelConfig) return true;
@@ -244,6 +273,31 @@ export function WorkbenchPage() {
     }
   }
 
+  async function handleManualOptimizeSubmit() {
+    if (!activeOptimizeItem || !jobId.trim()) {
+      messageApi.warning('当前没有可保存的改写项');
+      return;
+    }
+
+    const fallbackEditedContent = activeOptimizeItem.suggestion?.trim() || activeOptimizeItem.description.trim();
+    const editedContent = manualDrafts[activeOptimizeItem.id]?.trim() || fallbackEditedContent;
+    if (!editedContent) {
+      messageApi.warning('手动编辑时请填写改写内容');
+      return;
+    }
+
+    try {
+      const updated = await applyDiagnosisItemAction(jobId, activeOptimizeItem.id, {
+        action: 'MANUAL_EDIT',
+        editedContent,
+      });
+      store.applyDiagnosisItemUpdate(updated);
+      messageApi.success('已保存编辑');
+    } catch (error) {
+      messageApi.error(error instanceof Error ? error.message : '保存编辑失败');
+    }
+  }
+
   async function handleGenerateBattlePack() {
     if (!workspaceId.trim()) { messageApi.warning('请先输入 workspaceId'); return; }
     if (!ensureModelConfigured()) return;
@@ -321,11 +375,277 @@ export function WorkbenchPage() {
     reviewLoading;
 
   const currentHeader = headerConfig[selectedModule];
+  const currentConversationKey =
+    selectedModule === 'diagnosis' ? activeDiagnosisItem?.id :
+    selectedModule === 'optimize' ? activeOptimizeItem?.id :
+    selectedModule === 'qa' ? activeQaRound?.id :
+    'review-overview';
+
+  const moduleConversations = useMemo<WorkspaceAiConversationItem[]>(() => {
+    if (selectedModule === 'diagnosis') {
+      return diagnosisViewModel.sortedItems.map((item) => ({
+        key: item.id,
+        label: item.title,
+        group: item.status === 'OPEN' ? '待处理' : '已归档',
+      }));
+    }
+
+    if (selectedModule === 'optimize') {
+      return optimizeItems.map((item) => ({
+        key: item.id,
+        label: item.title,
+        group: item.status === 'OPEN' ? '待改写' : '已处理',
+      }));
+    }
+
+    if (selectedModule === 'qa') {
+      return qaRounds.map((round, index) => ({
+        key: round.id,
+        label: `Q${index + 1} · ${round.question}`,
+        group: round.userAnswer?.trim() ? '已回答' : '待回答',
+      }));
+    }
+
+    return [
+      { key: 'review-overview', label: '准备度总览', group: '复盘' },
+      { key: 'review-risks', label: '仍然薄弱', group: '复盘' },
+      { key: 'review-plan', label: '下一步计划', group: '复盘' },
+    ];
+  }, [diagnosisViewModel.sortedItems, optimizeItems, qaRounds, selectedModule]);
+
+  const moduleStatusText =
+    selectedModule === 'diagnosis' ? `任务 ${currentJob?.status ?? 'IDLE'}` :
+    selectedModule === 'optimize' ? `${diagnosisViewModel.optimizableCount} 条可改写` :
+    selectedModule === 'qa' ? `进度 ${sessionProgress}%` :
+    reviewReport?.readinessLevel ?? '待生成复盘';
+
+  const senderValue =
+    selectedModule === 'optimize'
+      ? activeOptimizeItem
+        ? manualDrafts[activeOptimizeItem.id] ?? activeOptimizeItem.editedContent ?? activeOptimizeItem.suggestion ?? ''
+        : ''
+      : selectedModule === 'qa'
+        ? activeQaRound
+          ? answerDrafts[activeQaRound.id] ?? activeQaRound.userAnswer ?? ''
+          : ''
+        : assistantDraft;
+
+  const senderDisabled =
+    selectedModule === 'optimize' ? !activeOptimizeItem :
+    selectedModule === 'qa' ? !activeQaRound :
+    selectedModule === 'review' ? !sessionId.trim() :
+    false;
+
+  function handleSenderChange(value: string) {
+    if (selectedModule === 'optimize') {
+      if (!activeOptimizeItem) return;
+      setManualDrafts((prev) => ({ ...prev, [activeOptimizeItem.id]: value }));
+      return;
+    }
+
+    if (selectedModule === 'qa') {
+      if (!activeQaRound) return;
+      setAnswerDrafts((prev) => ({ ...prev, [activeQaRound.id]: value }));
+      return;
+    }
+
+    setAssistantDraft(value);
+  }
+
+  async function handleAiSubmit() {
+    if (selectedModule === 'diagnosis') {
+      await handleStartDiagnosis();
+      setAssistantDraft('');
+      return;
+    }
+
+    if (selectedModule === 'optimize') {
+      await handleManualOptimizeSubmit();
+      return;
+    }
+
+    if (selectedModule === 'qa') {
+      messageApi.info('请在问答练习面板提交当前回答，提交后会自动刷新批改结果');
+      return;
+    }
+
+    messageApi.info('请在复盘清单面板生成或刷新复盘结果');
+  }
+
+  const promptItems = useMemo(() => {
+    if (selectedModule === 'diagnosis') {
+      return [
+        { key: 'rerun-diagnosis', label: '重新诊断', description: '按当前模型重新执行诊断编排。' },
+        { key: 'open-optimize', label: '进入改写', description: '直接切到简历优化处理当前问题。' },
+        { key: 'open-qa', label: '进入问答', description: '把当前风险转成面试追问。' },
+      ];
+    }
+
+    if (selectedModule === 'optimize') {
+      return [
+        { key: 'save-edit', label: '保存编辑', description: '保存当前手动改写版本。', disabled: !activeOptimizeItem },
+        { key: 'open-qa', label: '转到问答', description: '继续准备与该问题相关的追问。' },
+      ];
+    }
+
+    if (selectedModule === 'qa') {
+      return [
+        { key: 'generate-questions', label: '继续追问', description: '继续生成下一批高频追问。', disabled: !sessionId.trim() },
+        { key: 'open-optimize', label: '回到简历', description: '把暴露出的薄弱点重新写回简历。' },
+      ];
+    }
+
+    return [
+      { key: 'open-diagnosis', label: '回到诊断', description: '继续处理未关闭的风险项。' },
+      { key: 'open-qa', label: '继续问答', description: '回到问答模块补齐回答。' },
+    ];
+  }, [activeOptimizeItem, selectedModule, sessionId]);
+
+  function handlePromptSelect(key: string) {
+    if (key === 'rerun-diagnosis') {
+      void handleStartDiagnosis();
+      return;
+    }
+    if (key === 'open-optimize') {
+      setSelectedModule('optimize');
+      return;
+    }
+    if (key === 'open-qa') {
+      setSelectedModule('qa');
+      return;
+    }
+    if (key === 'open-diagnosis') {
+      setSelectedModule('diagnosis');
+      return;
+    }
+    if (key === 'generate-questions') {
+      void handleGenerateQuestionsCommand();
+      return;
+    }
+    if (key === 'save-edit') {
+      void handleManualOptimizeSubmit();
+    }
+  }
+
+  const aiMessages = useMemo<WorkspaceAiMessage[]>(() => {
+    if (selectedModule === 'diagnosis') {
+      if (!activeDiagnosisItem) {
+        return [{
+          key: 'diagnosis-empty',
+          role: 'system',
+          title: '等待诊断任务',
+          content: '当前还没有诊断卡片。你可以先点击右上角 `重新诊断`，或者在导入流程完成后回到这里。',
+        }];
+      }
+
+      return [
+        {
+          key: `diagnosis-summary-${activeDiagnosisItem.id}`,
+          role: 'ai',
+          title: '风险摘要',
+          status: activeDiagnosisItem.status === 'OPEN' ? 'loading' : 'success',
+          content: `### ${activeDiagnosisItem.title}\n\n- 严重级别：${severityBadgeText(activeDiagnosisItem.severity)}\n- 当前状态：${activeDiagnosisItem.status}\n- 处理建议：优先补充结果指标、技术权衡和验证证据。`,
+        },
+        {
+          key: `diagnosis-evidence-${activeDiagnosisItem.id}`,
+          role: 'system',
+          title: '原始证据',
+          content: `> ${(activeDiagnosisItem.userNote?.trim() || activeDiagnosisItem.description || '暂无原始证据').replace(/\n/g, '\n> ')}`,
+        },
+        {
+          key: `diagnosis-suggestion-${activeDiagnosisItem.id}`,
+          role: 'ai',
+          title: 'AI 改写建议',
+          content: activeDiagnosisItem.suggestion ?? '当前还没有改写建议，可以先切到“简历优化”补充自己的版本。',
+        },
+      ];
+    }
+
+    if (selectedModule === 'optimize') {
+      if (!activeOptimizeItem) {
+        return [{
+          key: 'optimize-empty',
+          role: 'system',
+          title: '等待可改写项',
+          content: '还没有需要处理的改写项。完成一次诊断后，这里会自动出现可编辑内容。',
+        }];
+      }
+
+      return [
+        {
+          key: `optimize-source-${activeOptimizeItem.id}`,
+          role: 'system',
+          title: '原文',
+          content: activeOptimizeItem.userNote?.trim() || activeOptimizeItem.description || '暂无原文。',
+        },
+        {
+          key: `optimize-suggestion-${activeOptimizeItem.id}`,
+          role: 'ai',
+          title: '推荐改写',
+          content: activeOptimizeItem.suggestion ?? '当前没有推荐改写，可以直接在发送框里整理自己的版本。',
+        },
+      ];
+    }
+
+    if (selectedModule === 'qa') {
+      if (!activeQaRound) {
+        return [{
+          key: 'qa-empty',
+          role: 'system',
+          title: '等待追问生成',
+          content: '还没有问答轮次。先生成追问，AI 面板会把问题、回答和批改结果串成完整对话。',
+        }];
+      }
+
+      return [
+        { key: `qa-question-${activeQaRound.id}`, role: 'ai', title: '当前追问', content: activeQaRound.question },
+        {
+          key: `qa-answer-${activeQaRound.id}`,
+          role: 'user',
+          title: '你的回答',
+          content: activeQaRound.userAnswer?.trim() || '还没有提交回答。可以在底部发送区里先组织答案。',
+        },
+        {
+          key: `qa-feedback-${activeQaRound.id}`,
+          role: 'ai',
+          title: 'AI 批改结果',
+          content: activeQaRound.feedback?.trim()
+            ? `- 评分：${activeQaRound.score ?? '--'}\n- 反馈：${activeQaRound.feedback}\n- 补强：${activeQaRound.followUpQuestion ?? '继续补充项目背景、动作和结果'}`
+            : '提交回答后，这里会显示评分、漏洞和下一轮追问建议。',
+        },
+      ];
+    }
+
+    return [
+      {
+        key: 'review-summary',
+        role: 'ai',
+        title: '准备度总览',
+        content: `- 待处理风险：${diagnosisViewModel.pendingRiskCount}\n- 高风险：${diagnosisViewModel.highRiskCount}\n- 当前会话：${sessionId || '未建立'}`,
+      },
+    ];
+  }, [
+    activeDiagnosisItem,
+    activeOptimizeItem,
+    activeQaRound,
+    diagnosisViewModel.highRiskCount,
+    diagnosisViewModel.pendingRiskCount,
+    selectedModule,
+    sessionId,
+  ]);
+
+  const modelConfigSummary = {
+    model: activeModelConfig?.defaultModel?.trim() || '未配置模型',
+    baseUrl: activeModelConfig?.baseUrl?.trim() || '未配置',
+    apiKey: activeModelConfig?.apiKeyMasked?.trim() || '未配置',
+    healthText,
+    onOpenConfig: () => setModelConfigOpen(true),
+  };
 
   return (
     <div className="draft-workspace-shell">
       {messageContextHolder}
-      <WorkbenchSidebar />
+      <WorkbenchSidebar modelConfigSummary={modelConfigSummary} />
       <main className="draft-workspace-main">
         <header className="draft-main-header">
           <div className="draft-main-heading">
@@ -363,9 +683,32 @@ export function WorkbenchPage() {
           </Space>
         </header>
 
+        <WorkspaceAiPanel
+          moduleTitle={currentHeader.title}
+          moduleSubtitle={currentHeader.subtitle}
+          moduleStatus={moduleStatusText}
+          conversations={moduleConversations}
+          activeConversationKey={currentConversationKey}
+          onConversationChange={(key) => {
+            if (selectedModule === 'diagnosis') setSelectedDiagnosisItemId(key);
+            if (selectedModule === 'optimize') setSelectedOptimizeItemId(key);
+            if (selectedModule === 'qa') setSelectedQaRoundId(key);
+          }}
+          messages={aiMessages}
+          senderValue={senderValue}
+          senderPlaceholder="继续输入追问、改写或复盘指令"
+          senderLoading={moduleActionLoading}
+          senderDisabled={senderDisabled}
+          onSenderChange={handleSenderChange}
+          onSenderSubmit={() => void handleAiSubmit()}
+          promptItems={promptItems}
+          promptLabel="快捷动作"
+          onPromptSelect={handlePromptSelect}
+        />
+
         {selectedModule === 'diagnosis' && <DiagnosisPanel diagnosisViewModel={diagnosisViewModel} />}
         {selectedModule === 'optimize' && <OptimizePanel items={diagnosisViewModel.sortedItems} />}
-        {selectedModule === 'qa' && <QAPanel sessionId={sessionId} />}
+        {selectedModule === 'qa' && <QAPanel sessionId={sessionId} onSessionReload={loadSession} />}
         {selectedModule === 'review' && <ReviewPanel diagnosisViewModel={{ pendingRiskCount: diagnosisViewModel.pendingRiskCount, highRiskCount: diagnosisViewModel.highRiskCount }} sessionId={sessionId} workspaceId={workspaceId} />}
 
         <Space wrap className="draft-console-hidden">

@@ -5,12 +5,12 @@ import { useWorkbenchStore } from '@/stores/workbench-store';
 import { submitSessionAnswer, generateSessionQuestions } from '@/services/sessions';
 import type { DiagnosisItem } from '@/types/diagnosis';
 import type { SessionRound } from '@/types/sessions';
-import './styles.less';
 
 const { Text } = Typography;
 
 type QAPanelProps = {
   sessionId: string;
+  onSessionReload: (sessionId?: string, options?: { silent?: boolean }) => Promise<void>;
 };
 
 function scoreTagColor(score: number | null) {
@@ -20,7 +20,7 @@ function scoreTagColor(score: number | null) {
   return 'error';
 }
 
-export function QAPanel({ sessionId }: QAPanelProps) {
+export function QAPanel({ sessionId, onSessionReload }: QAPanelProps) {
   const [messageApi, messageContextHolder] = message.useMessage();
   const currentJob = useWorkbenchStore((state) => state.currentJob);
   const currentSession = useWorkbenchStore((state) => state.currentSession);
@@ -33,7 +33,6 @@ export function QAPanel({ sessionId }: QAPanelProps) {
   const questionGenerating = useWorkbenchStore((state) => state.questionGenerating);
   const setQuestionGenerating = useWorkbenchStore((state) => state.setQuestionGenerating);
   const sessionProgress = useWorkbenchStore((state) => state.sessionProgress);
-  const setSessionLoading = useWorkbenchStore((state) => state.setSessionLoading);
 
   const qaViewModel = useMemo(() => {
     const rounds = currentSession?.rounds ?? [];
@@ -87,7 +86,7 @@ export function QAPanel({ sessionId }: QAPanelProps) {
         createFollowUp: true,
       });
       messageApi.success('回答已提交并完成批改');
-      setSessionLoading(true);
+      await onSessionReload(currentSession.id, { silent: true });
     } catch (error) {
       messageApi.error(error instanceof Error ? error.message : '提交回答失败');
     } finally {
@@ -105,7 +104,7 @@ export function QAPanel({ sessionId }: QAPanelProps) {
     try {
       const generated = await generateSessionQuestions(normalized, { count: 4 });
       messageApi.success(`已生成 ${generated.generatedCount} 道问题`);
-      setSessionLoading(true);
+      await onSessionReload(normalized, { silent: true });
     } catch (error) {
       messageApi.error(error instanceof Error ? error.message : '生成问题失败');
     } finally {

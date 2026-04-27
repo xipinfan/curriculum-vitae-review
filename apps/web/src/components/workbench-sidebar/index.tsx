@@ -1,7 +1,6 @@
 import { SearchOutlined } from '@ant-design/icons';
-import { Typography } from 'antd';
+import { Button, Typography } from 'antd';
 import { useWorkbenchStore, type ModuleKey } from '@/stores/workbench-store';
-import './styles.less';
 
 const { Text } = Typography;
 
@@ -58,10 +57,21 @@ export function useWorkbenchDiagnosisViewModel() {
   };
 }
 
-export function WorkbenchSidebar() {
+type WorkbenchSidebarProps = {
+  modelConfigSummary?: {
+    model: string;
+    baseUrl: string;
+    apiKey: string;
+    healthText: string;
+    onOpenConfig: () => void;
+  };
+};
+
+export function WorkbenchSidebar({ modelConfigSummary }: WorkbenchSidebarProps) {
   const selectedModule = useWorkbenchStore((state) => state.selectedModule);
   const setSelectedModule = useWorkbenchStore((state) => state.setSelectedModule);
   const targetRole = useWorkbenchStore((state) => state.targetRole);
+  const workspaceName = useWorkbenchStore((state) => state.workspaceName);
   const currentJob = useWorkbenchStore((state) => state.currentJob);
   const diagnosisViewModel = useWorkbenchDiagnosisViewModel();
 
@@ -75,7 +85,8 @@ export function WorkbenchSidebar() {
       </div>
 
       <div className="draft-resume-meta">
-        <Text className="draft-resume-name">{targetRole || '张三 · 后端开发'}</Text>
+        <Text className="draft-resume-name">{workspaceName.trim() || '当前作战包'}</Text>
+        <Text className="draft-resume-date">{targetRole || '待确认岗位画像'}</Text>
         <Text className="draft-resume-date">
           {currentJob?.updatedAt ? `最后更新 ${new Date(currentJob.updatedAt).toLocaleString()}` : "最后更新 --"}
         </Text>
@@ -104,6 +115,35 @@ export function WorkbenchSidebar() {
           {diagnosisViewModel.pendingRiskCount} 个风险待处理 · {diagnosisViewModel.pendingAnswerCount} 个回答待批改
         </Text>
       </div>
+
+      {modelConfigSummary ? (
+        <div className="draft-side-card">
+          <div className="draft-side-card-head">
+            <Text className="draft-side-card-title">模型配置概览</Text>
+            <Button className="draft-side-card-btn" onClick={modelConfigSummary.onOpenConfig}>
+              {modelConfigSummary.model === '未配置模型' ? '配置' : '修改'}
+            </Button>
+          </div>
+          <div className="draft-info-list">
+            <div className="draft-info-row">
+              <Text className="draft-info-label">默认模型</Text>
+              <Text className="draft-info-value">{modelConfigSummary.model}</Text>
+            </div>
+            <div className="draft-info-row">
+              <Text className="draft-info-label">Base URL</Text>
+              <Text className="draft-info-value">{modelConfigSummary.baseUrl}</Text>
+            </div>
+            <div className="draft-info-row">
+              <Text className="draft-info-label">API Key</Text>
+              <Text className="draft-info-value">{modelConfigSummary.apiKey}</Text>
+            </div>
+            <div className="draft-info-row">
+              <Text className="draft-info-label">API 状态</Text>
+              <Text className="draft-info-value">{modelConfigSummary.healthText}</Text>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </aside>
   );
 }

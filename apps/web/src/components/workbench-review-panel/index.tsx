@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useWorkbenchStore } from '@/stores/workbench-store';
 import { getSessionReview, getSessionReviewTrends } from '@/services/sessions';
 import type { SessionReviewReport } from '@/types/sessions';
-import './styles.less';
 
 const { Text } = Typography;
 

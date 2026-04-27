@@ -4,7 +4,6 @@ import type { DiagnosisItem } from '@/types/diagnosis';
 import { useWorkbenchStore } from '@/stores/workbench-store';
 import { applyDiagnosisItemAction } from '@/services/diagnosis';
 import { message } from 'antd';
-import './styles.less';
 
 const { Text } = Typography;
 

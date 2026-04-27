@@ -3,7 +3,6 @@ import { Button, Empty, Input, Typography, message } from 'antd';
 import type { DiagnosisItem } from '@/types/diagnosis';
 import { useWorkbenchStore } from '@/stores/workbench-store';
 import { applyDiagnosisItemAction } from '@/services/diagnosis';
-import './styles.less';
 
 const { Text } = Typography;
 
