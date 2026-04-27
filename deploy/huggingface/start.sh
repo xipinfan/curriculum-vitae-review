@@ -5,8 +5,6 @@ set -eu
 : "${ADMIN_KEY:?ADMIN_KEY is required. Set a long random value in Hugging Face Spaces secrets.}"
 
 export PORT="${PORT:-3001}"
-export OPENAI_BASE_URL="${OPENAI_BASE_URL:-https://api.openai.com/v1}"
-export OPENAI_MODEL="${OPENAI_MODEL:-gpt-4.1-mini}"
 
 pnpm --filter @cv-review/api prisma:migrate:deploy
 
