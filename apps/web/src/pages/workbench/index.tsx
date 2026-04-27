@@ -1,6 +1,6 @@
 import { CheckCircleOutlined, EditOutlined, MessageOutlined, SearchOutlined } from '@ant-design/icons';
 import { Button, Space, Tag, Typography, message } from 'antd';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ModelConfigModal } from '@/components/model-config-modal';
 import { useWorkspaceModelConfig } from '@/hooks/use-workspace-model-config';
 import { useWorkbenchStore } from '@/stores/workbench-store';
@@ -74,7 +74,6 @@ export function WorkbenchPage() {
     resetBattlePack,
   } = store;
 
-  const bootstrappedWorkspaceIdRef = useRef('');
   const [modelConfigOpen, setModelConfigOpen] = useState(false);
 
   const { activeConfig: activeModelConfig, reload: reloadModelConfig } = useWorkspaceModelConfig(workspaceId);
@@ -82,7 +81,7 @@ export function WorkbenchPage() {
 
   function ensureModelConfigured() {
     if (activeModelConfig) return true;
-    messageApi.warning('请先配置模型 / Base URL / API Key，避免继续使用默认模型');
+    messageApi.warning('请先配置模型 / Base URL / API Key，当前工作台不会在未配置时继续执行');
     return false;
   }
 
@@ -125,8 +124,6 @@ export function WorkbenchPage() {
   useEffect(() => {
     const normalizedWorkspaceId = workspaceId.trim();
     if (!normalizedWorkspaceId) return;
-    if (bootstrappedWorkspaceIdRef.current === normalizedWorkspaceId) return;
-    bootstrappedWorkspaceIdRef.current = normalizedWorkspaceId;
     void loadJobs();
     void loadSessions();
   }, [workspaceId]);
@@ -318,38 +315,6 @@ export function WorkbenchPage() {
     }
   }
 
-  useEffect(() => {
-    if (diagnosisViewModel.sortedItems.length === 0) {
-      if (store.selectedDiagnosisItemId) store.setSelectedDiagnosisItemId('');
-      return;
-    }
-    if (!store.selectedDiagnosisItemId || !diagnosisViewModel.sortedItems.some((i) => i.id === store.selectedDiagnosisItemId)) {
-      store.setSelectedDiagnosisItemId(diagnosisViewModel.sortedItems[0].id);
-    }
-  }, [diagnosisViewModel.sortedItems, store.selectedDiagnosisItemId]);
-
-  useEffect(() => {
-    if (diagnosisViewModel.sortedItems.length === 0) {
-      if (store.selectedOptimizeItemId) store.setSelectedOptimizeItemId('');
-      return;
-    }
-    if (!store.selectedOptimizeItemId || !diagnosisViewModel.sortedItems.some((i) => i.id === store.selectedOptimizeItemId)) {
-      store.setSelectedOptimizeItemId(diagnosisViewModel.sortedItems[0].id);
-    }
-  }, [diagnosisViewModel.sortedItems, store.selectedOptimizeItemId]);
-
-  useEffect(() => {
-    const rounds = currentSession?.rounds ?? [];
-    if (rounds.length === 0) {
-      if (store.selectedQaRoundId) store.setSelectedQaRoundId('');
-      return;
-    }
-    if (!store.selectedQaRoundId || !rounds.some((r) => r.id === store.selectedQaRoundId)) {
-      const fallback = rounds.find((r) => !r.userAnswer?.trim()) ?? rounds[0];
-      store.setSelectedQaRoundId(fallback.id);
-    }
-  }, [currentSession?.rounds, store.selectedQaRoundId]);
-
   const moduleActionLoading =
     selectedModule === 'diagnosis' ? jobLoading :
     selectedModule === 'qa' ? questionGenerating :
@@ -369,7 +334,7 @@ export function WorkbenchPage() {
           </div>
           <Space size={10} wrap>
             <button type="button" className="draft-model-pill" onClick={() => setModelConfigOpen(true)}>
-              <Text>{activeModelConfig?.defaultModel || "未配置模型"}</Text>
+              <Text>{activeModelConfig?.defaultModel || '未配置模型'}</Text>
             </button>
             <Button
               className="draft-rerun-btn"
@@ -419,8 +384,4 @@ export function WorkbenchPage() {
       />
     </div>
   );
-}
-
-async function handleGenerateQuestions(this: { messageApi: ReturnType<typeof message.useMessage>[0]; sessionId: string; ensureModelConfigured: () => boolean; setQuestionGenerating: (v: boolean) => void; loadSession: (id: string, opts?: { silent?: boolean }) => Promise<void> }) {
-  // Helper function used inline in the component via closure
 }

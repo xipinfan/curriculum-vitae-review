@@ -1,6 +1,6 @@
 import { ConfigProvider } from 'antd';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorkbenchPage } from './index';
 
 vi.mock('@/services/system', () => ({
@@ -60,6 +60,12 @@ vi.mock('@/hooks/use-workspace-model-config', () => ({
 }));
 
 describe('WorkbenchPage', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    localStorage.setItem('cv-review.workspaceId', 'workspace-1');
+    localStorage.setItem('cv-review.workspaceName', 'Alpha Workspace');
+  });
+
   it('renders ant design x style ai workspace shell', async () => {
     render(
       <ConfigProvider>
@@ -70,5 +76,9 @@ describe('WorkbenchPage', () => {
     expect(await screen.findByText('作战包')).toBeInTheDocument();
     expect(screen.getByText('AI 作战中枢')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('继续输入追问、改写或复盘指令')).toBeInTheDocument();
+    expect(screen.getByText('模型配置概览')).toBeInTheDocument();
+    expect(screen.getByText('Base URL')).toBeInTheDocument();
+    expect(screen.getByText('API Key')).toBeInTheDocument();
+    expect(screen.getByText('sk***123')).toBeInTheDocument();
   });
 });
