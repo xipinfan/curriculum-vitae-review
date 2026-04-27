@@ -1,0 +1,13 @@
+node_modules
+.env
+.env.*
+!.env.example
+
+apps/api/dist
+apps/web/dist
+*.tsbuildinfo
+
+.superpowers/
+
+tmp-*.log
+tmp-start-*.ps1

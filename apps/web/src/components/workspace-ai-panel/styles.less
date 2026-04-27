@@ -1,0 +1,136 @@
+.workspace-ai-panel {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 18px;
+  min-height: 620px;
+}
+
+.workspace-ai-panel__sidebar,
+.workspace-ai-panel__main {
+  border-radius: 20px;
+  border: 1px solid #cbccc9;
+  background: #ffffff;
+}
+
+.workspace-ai-panel__sidebar {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.workspace-ai-panel__sidebar-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.workspace-ai-panel__sidebar-title.ant-typography,
+.workspace-ai-panel__prompts-title.ant-typography,
+.workspace-ai-panel__bubble-title.ant-typography {
+  margin: 0;
+  color: #111111;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+.workspace-ai-panel__sidebar-hint.ant-typography {
+  margin: 0;
+  color: #666666;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.workspace-ai-panel__conversations {
+  flex: 1;
+  min-height: 0;
+}
+
+.workspace-ai-panel__empty-nav {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.workspace-ai-panel__main {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.workspace-ai-panel__welcome {
+  background: linear-gradient(135deg, rgba(255, 132, 0, 0.14), rgba(255, 132, 0, 0.04));
+  border-radius: 18px;
+}
+
+.workspace-ai-panel__welcome-extra {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.workspace-ai-panel__prompts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.workspace-ai-panel__bubble-wrap {
+  flex: 1;
+  min-height: 320px;
+  border-radius: 18px;
+  background: #f8f8f6;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.workspace-ai-panel__sender {
+  border-radius: 18px;
+  background: #f4f5f1;
+}
+
+.workspace-ai-markdown {
+  color: #111111;
+}
+
+.workspace-ai-markdown > :first-child {
+  margin-top: 0;
+}
+
+.workspace-ai-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.workspace-ai-markdown p,
+.workspace-ai-markdown li,
+.workspace-ai-markdown blockquote {
+  color: #111111;
+  line-height: 1.6;
+}
+
+.workspace-ai-markdown ul,
+.workspace-ai-markdown ol {
+  padding-left: 20px;
+}
+
+.workspace-ai-markdown code {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(17, 17, 17, 0.06);
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+@media (max-width: 1100px) {
+  .workspace-ai-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-ai-panel__bubble-wrap {
+    min-height: 260px;
+  }
+}
